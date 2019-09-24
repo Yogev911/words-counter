@@ -4,4 +4,5 @@ COPY . /app
 WORKDIR /app
 RUN pip3 install -r /app/requirements.txt
 EXPOSE 5000
-CMD ["python", "-u" ,"api.py",  "--host", "0.0.0.0"]
+EXPOSE 8081
+CMD ["python", "-u" ,"main.py",  "--host", "0.0.0.0"]

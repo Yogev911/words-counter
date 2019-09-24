@@ -1,18 +1,13 @@
 import json
-from random import randint
 import requests
 from collections import Counter
-from multiprocessing import Pool, Manager
-import os
+from multiprocessing import Pool
 
-import conf
-from utilities.dal import DbClient
-from utilities.logger import Logger
+from conf import MAX_LINES_TO_PARSE, MAX_PROCESS, BLOCK_SIZE
 from utilities.utils import is_url, is_path, preprocess_data
 from utilities.exceptions import *
 
 
-# db = DbClient()
 # logger = Logger(__name__)
 
 
@@ -40,7 +35,7 @@ def extract_words(request):
 
 def get_text_from_url(url):
     res = requests.get(url)
-    processed_data = preprocess_data(res.json().get('st'))
+    processed_data = preprocess_data(res.json().get('data'))
     insert_words_to_db(processed_data)
 
 
@@ -52,11 +47,10 @@ def get_text_from_body(raw_text):
 def get_text_from_path(path):
     try:
         words = Counter()
-        pool = Pool(os.cpu_count())
+        pool = Pool(MAX_PROCESS)
         lines = list(range(get_line_count(path)))
-        line_to_parse = 5
+        line_to_parse = MAX_LINES_TO_PARSE
         liners = [[path] + lines[i:i + line_to_parse] for i in range(0, len(lines), line_to_parse)]
-
         for bulk in pool.map(parse_chunk, liners):
             words += bulk
         insert_words_to_db(words)
@@ -86,21 +80,23 @@ def parse_chunk(data):
         return None
 
 
+def blocks(files):
+    while True:
+        b = files.read(BLOCK_SIZE)
+        if not b: break
+        yield b
+
+
 def get_line_count(path):
     """
     return the number of lines in text
     :param path:
     :return:
     """
-    def blocks(files, size=65536):
-        while True:
-            b = files.read(size)
-            if not b: break
-            yield b
-
     with open(path, "r", encoding="utf-8", errors='ignore') as f:
         return sum(bl.count("\n") for bl in blocks(f))
 
 
 def insert_words_to_db(word_counts):
-    print(word_counts)
+    # print(word_counts)
+    requests.post('http://0.0.0.0:8081/insert', data=json.dumps(dict(word_counts)))

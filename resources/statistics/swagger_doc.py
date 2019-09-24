@@ -1,64 +1,20 @@
-from resources.common_modles import Puzzle
+from resources.common_modles import WordModel
 
-puzzle_get = {
-    'tags': ['puzzle'],
-    'description': 'get fresh question',
+statistic_post = {
+    'tags': ['statistic'],
+    'description': 'null',
     'parameters': [
         {
-            'name': 'token',
-            'description': 'authentication token',
-            'in': 'header',
-            'type': 'string',
-            'required': True,
-        }
-    ],
-    'responses': {
-        '200': {
-            'description': 'Question is still unsolved',
-        },
-        '201': {
-            'description': 'Question set',
-        },
-        '401': {
-            'description': 'Token is not authenticated'
-        },
-        '501': {
-            'description': 'Internal server error'
-        }
-    }
-}
-
-puzzle_put = {
-    'tags': ['puzzle'],
-    'description': 'solve puzzle',
-    'parameters': [
-        {
-            'name': 'token',
-            'description': 'authentication token',
-            'in': 'header',
-            'type': 'string',
-            'required': True,
-        },
-        {
-            'name': 'answer',
-            'description': 'type your answer here',
+            'name': 'word',
+            'description': 'Word search',
             'in': 'body',
-            'schema': Puzzle,
+            'schema': WordModel,
             'required': True
         }
     ],
     'responses': {
         '200': {
-            'description': 'Question solved',
-        },
-        '401': {
-            'description': 'Token is not authenticated'
-        },
-        '404': {
-            'description': 'Question not found'
-        },
-        '406': {
-            'description': 'Wrong answer for question'
+            'description': 'Data received',
         },
         '501': {
             'description': 'Internal server error'
