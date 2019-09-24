@@ -24,13 +24,13 @@ def extract_words(request):
     """
     try:
         data = json.loads(request.data)
-        row_text = data.get('st')
-        if is_path(row_text):
-            get_text_from_path(row_text)
-        elif is_url(row_text):
-            get_text_from_url(row_text)
+        raw_text = data.get('data')
+        if is_path(raw_text):
+            get_text_from_path(raw_text)
+        elif is_url(raw_text):
+            get_text_from_url(raw_text)
         else:
-            get_text_from_body(row_text)
+            get_text_from_body(raw_text)
 
         return 'ok', 200
     except Exception as e:
@@ -44,8 +44,8 @@ def get_text_from_url(url):
     insert_words_to_db(processed_data)
 
 
-def get_text_from_body(row_text):
-    processed_data = preprocess_data(row_text)
+def get_text_from_body(raw_text):
+    processed_data = preprocess_data(raw_text)
     insert_words_to_db(processed_data)
 
 
