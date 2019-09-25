@@ -1,8 +1,15 @@
 version: '3'
 services:
   web:
+    depends_on: [redis]
     build: .
     ports:
       - "5000:5000"
+    #network_mode: host
+    #restart: always
   redis:
     image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    #network_mode: host
+    #restart: always
