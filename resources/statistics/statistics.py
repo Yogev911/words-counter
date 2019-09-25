@@ -7,4 +7,4 @@ from resources.statistics.swagger_doc import statistic_post
 class Statistics(Resource):
     @swagger.doc(statistic_post)
     def post(self):
-        return service.generate_math_question(request)
+        return service.get_word_count(request)

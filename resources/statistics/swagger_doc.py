@@ -1,7 +1,7 @@
 from resources.common_modles import WordModel
 
 statistic_post = {
-    'tags': ['statistic'],
+    'tags': ['Statistics'],
     'description': 'null',
     'parameters': [
         {

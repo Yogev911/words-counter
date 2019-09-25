@@ -3,18 +3,14 @@ import re
 # Environment variables
 
 # DB configuration
-DB_PORT = os.environ.get('DB_PORT')
-DB_HOST = os.environ.get('DB_HOST')
-DB_SCHEMA = os.environ.get('DB_SCHEMA')
-DB_PASSWORD = os.environ.get('DB_PASSWORD')
-DB_USER = os.environ.get('DB_USER')
-
+DB_PORT = os.environ.get('DB_PORT',6379)
+DB_HOST = os.environ.get('DB_HOST','localhost')
 
 # App config
 MAX_PROCESS = os.cpu_count()
-MAX_LINES_TO_PARSE = 5
+MAX_LINES_TO_PARSE = 500
 BLOCK_SIZE = 65536
-
+DB_INGEST_INTERVAL = 5
 
 URL_RE = re.compile(
     r'^(?:http|ftp)s?://'  # http:// or https://

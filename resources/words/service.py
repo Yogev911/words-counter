@@ -1,36 +1,37 @@
 import json
 import requests
+import time
 from collections import Counter
 from multiprocessing import Pool
-
-from conf import MAX_LINES_TO_PARSE, MAX_PROCESS, BLOCK_SIZE
-from utilities.utils import is_url, is_path, preprocess_data
+import redis
+from conf import MAX_LINES_TO_PARSE, MAX_PROCESS, BLOCK_SIZE, DB_HOST, DB_PORT
+from utilities.utils import is_url, is_path, preprocess_data, get_logger
 from utilities.exceptions import *
-
-
-# logger = Logger(__name__)
-
+import traceback
+cache = redis.Redis(host=DB_HOST, port=DB_PORT)
+logger = get_logger()
 
 def extract_words(request):
     """
-    Post new words
+    Post new words and parse them
     :param request:
     :return:
     """
     try:
         data = json.loads(request.data)
         raw_text = data.get('data')
+        logger.info("start process data")
         if is_path(raw_text):
             get_text_from_path(raw_text)
         elif is_url(raw_text):
             get_text_from_url(raw_text)
         else:
             get_text_from_body(raw_text)
-
-        return 'ok', 200
+        logger.info("done")
+        return 'data received', 201
     except Exception as e:
-        # logger.exception(f'Failed blah blah Error: {e.__str__()}')
-        return f'Failed blah blah Error: {e.__str__()}', 501
+        logger.info(f'Failed parse words: {e.__str__()}')
+        return f'Failed parse words: {e.__str__()}', 501
 
 
 def get_text_from_url(url):
@@ -46,19 +47,21 @@ def get_text_from_body(raw_text):
 
 def get_text_from_path(path):
     try:
-        words = Counter()
+        start_time = time.time()
         pool = Pool(MAX_PROCESS)
         lines = list(range(get_line_count(path)))
         line_to_parse = MAX_LINES_TO_PARSE
         liners = [[path] + lines[i:i + line_to_parse] for i in range(0, len(lines), line_to_parse)]
-        for bulk in pool.map(parse_chunk, liners):
-            words += bulk
-        insert_words_to_db(words)
-    except Exception as e:
-        print(e.__str__())
-    finally:
+        pool.map_async(parse_chunk, liners)
         pool.close()
         pool.join()
+        end_time = time.time()
+        logger.info(f"total time : {end_time - start_time}")
+    except Exception as e:
+        logger.info(e.__str__())
+        pool.close()
+        pool.join()
+
 
 
 def parse_chunk(data):
@@ -74,17 +77,10 @@ def parse_chunk(data):
                 if line_start <= i <= line_end:
                     pass
                     words += preprocess_data(line)
-            return words
+            insert_words_to_db(words)
     except Exception as e:
         print(e.__str__())
-        return None
-
-
-def blocks(files):
-    while True:
-        b = files.read(BLOCK_SIZE)
-        if not b: break
-        yield b
+        print(traceback.format_exc())
 
 
 def get_line_count(path):
@@ -93,10 +89,17 @@ def get_line_count(path):
     :param path:
     :return:
     """
+
+    def blocks(files):
+        while True:
+            b = files.read(BLOCK_SIZE)
+            if not b: break
+            yield b
+
     with open(path, "r", encoding="utf-8", errors='ignore') as f:
         return sum(bl.count("\n") for bl in blocks(f))
 
 
 def insert_words_to_db(word_counts):
-    # print(word_counts)
-    requests.post('http://0.0.0.0:8081/insert', data=json.dumps(dict(word_counts)))
+    for k, v in word_counts.items():
+        cache.incr(k, v)
