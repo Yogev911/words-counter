@@ -4,7 +4,7 @@ import re
 
 # DB configuration
 DB_PORT = os.environ.get('DB_PORT',6379)
-DB_HOST = os.environ.get('DB_HOST','redis')
+DB_HOST = os.environ.get('DB_HOST','localhost')
 
 # App config
 MAX_PROCESS = os.cpu_count()

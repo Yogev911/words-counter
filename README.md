@@ -1,6 +1,6 @@
-# SMS SERVICE - KIN
+# Words counter service - Lemonade
 
-A REST API for sending sms and keep track on coin balance (and learn math).
+A REST API for retrieve textual data, parse it, and count words in it.
 
 ## Getting Started
 
@@ -11,34 +11,18 @@ These instructions will get you a copy of the project up and running on your loc
 2. docker
 
 ## Service Deployment
-1. Set up a SQL server and run the `init-db.sql` script for initialize the db schemes
-2. Create and account on `https://www.nexmo.com/` and get the KEY and SECRET passwords
-3. Set up a AWS server (optional)
-4. Clone the source project And build an docker image of the project (optional)
 ```
-git pull https://github.com/Yogev911/sms-service.git
+git clone https://github.com/Yogev911/words-counter.git
 
-docker build -t sms-service:vx.x.x 
-```
+cd words-counter
 
-Or pull the latest image from the Docker hub (recommended)
-```
-docker pull yogev911/sms-service
+mkdir data
+
+bash main.sh
 ```
 
-5. Run the container
-```
-docker run --detach -p 5000:5000 --env DB_PORT=**** --env DB_HOST=**** --env DB_SCHEMA=**** --env DB_PASSWORD=**** --env DB_USER=**** --env NEXMO_SECRET=**** --env NEXMO_KEY=**** --env API_TOKEN_KEY=**** sms-service:latest
-```
 ####clarifications:
---detach will run the container in background
-
--p 5000:5000 will bind the port 5000 to the container where the app is listening
-
---env are the env variable that get from the sql server and nexmo
-
-the --env API_TOKEN_KEY=**** will be a string what ever you like for the JWT encryption and decryption
-
+This service runs a REDIS server and maps his volumes to /data folder
 
 ## Swagger-ui deployment
 SMS-SERVICE is using swagger API documentation
@@ -56,45 +40,29 @@ for more info `https://hub.docker.com/r/swaggerapi/swagger-ui/` and `https://swa
 ## How it works
 basic flow:
 
-1. register for new account
-`curl -X POST "http://ec2-3-17-178-119.us-east-2.compute.amazonaws.com:5000/register" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"user\": \"IamAnewUser\", \"password\": \"mypassword\", \"phone\": \"9728282663\"}"`
+1. insert new words from string in body
+`curl -X POST "http://localhost:5000/words" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"data\": \"Testing the input here\"}"`
 
-2. verify phone number via pin code - the registered phone number will receive a text message with a PIN code
-`curl -X PUT "http://ec2-3-17-178-119.us-east-2.compute.amazonaws.com:5000/verify/IamAnewUser/6666" -H "accept: application/json"`
+2. insert new words from url in body
+`curl -X POST "http://localhost:5000/words" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"data\": \"http:localhost:8081/getwords\"}"`
 
-3. login to achieve API token 
-`curl -X POST "https://ec2-3-17-178-119.us-east-2.compute.amazonaws.com:5000/login" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"user\": \"IamAnewUser\", \"password\": \"mypassword\", \"phone\": \"9728282663\"}"`
+3. insert new words from path in body
+`curl -X POST "http://localhost:5000/words" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"data\": \"/Users/yogevheskia/projects/words-counter/README.md\"}"`
 
-4. send sms
-`curl -X POST "http://ec2-3-17-178-119.us-east-2.compute.amazonaws.com:5000/send" -H "accept: application/json" -H "token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo5LCJwaG9uZSI6Ijk3MjUyODI4MjY2MyIsImV4cCI6MTU1OTQ4NTMxMn0.R0E83enfbIfPPbdNH0ZWp6pnXSdk8mP3EZkFwORUiv0" -H "Content-Type: application/json" -d "{ \"msg\": \"this is a new message\", \"dest\": \"9728282663\"}"`
+4. query for word in DB
+`curl -X POST "http://localhost:5000/statistics" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"word\": \"Yogev\"}"`
 
-5. get math question for achieve coins
-`curl -X GET "http://ec2-3-17-178-119.us-east-2.compute.amazonaws.com:5000/puzzle" -H "accept: application/json" -H "token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo5LCJwaG9uZSI6Ijk3MjUyODI4MjY2MyIsImV4cCI6MTU1OTQ4NTMxMn0.R0E83enfbIfPPbdNH0ZWp6pnXSdk8mP3EZkFwORUiv0"`
-
-6. submit an answer for math question
-`curl -X PUT "http://ec2-3-17-178-119.us-east-2.compute.amazonaws.com:5000/puzzle" -H "accept: application/json" -H "token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo5LCJwaG9uZSI6Ijk3MjUyODI4MjY2MyIsImV4cCI6MTU1OTQ4NTMxMn0.R0E83enfbIfPPbdNH0ZWp6pnXSdk8mP3EZkFwORUiv0" -H "Content-Type: application/json" -d "{ \"answer\": \"14\"}"`
-
-7. check current coins balance
-`curl -X GET "http://ec2-3-17-178-119.us-east-2.compute.amazonaws.com:5000/user/balance" -H "accept: application/json" -H "token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjo5LCJwaG9uZSI6Ijk3MjUyODI4MjY2MyIsImV4cCI6MTU1OTQ4NTMxMn0.R0E83enfbIfPPbdNH0ZWp6pnXSdk8mP3EZkFwORUiv0"`
 
 ## Tests
-Each component has an `test.py` file that contains unittests for the component
-
-Coverage 100%
-
-## Code Documentations
-Each function starts with DocString that explains the usage and output
+Utils component has an `test.py` file that contains unittests for the component
 
 ## Exceptions
 This project contains a `exception.py` file that defines app custom exceptions
 
 ## Built With
-* **AWS**
 * **Flask Framework**
 * **unittest**
-* **Nexmo sms adapter**
-* **SQL server**
-* **LOVE**
+* **REDIS DB**
 
 ## Author
 

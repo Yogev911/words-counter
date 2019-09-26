@@ -16,6 +16,12 @@ statistic_post = {
         '200': {
             'description': 'Data received',
         },
+        '400': {
+            'description': 'Bad input'
+        },
+        '404': {
+            'description': 'Word not found'
+        },
         '501': {
             'description': 'Internal server error'
         }

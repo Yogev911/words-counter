@@ -6,16 +6,17 @@ from multiprocessing import Pool
 import redis
 from conf import MAX_LINES_TO_PARSE, MAX_PROCESS, BLOCK_SIZE, DB_HOST, DB_PORT
 from utilities.utils import is_url, is_path, preprocess_data, get_logger
-from utilities.exceptions import *
 import traceback
+
 cache = redis.Redis(host=DB_HOST, port=DB_PORT)
 logger = get_logger()
+
 
 def extract_words(request):
     """
     Post new words and parse them
     :param request:
-    :return:
+    :return: response
     """
     try:
         data = json.loads(request.data)
@@ -57,11 +58,11 @@ def get_text_from_path(path):
         pool.join()
         end_time = time.time()
         logger.info(f"total time : {end_time - start_time}")
+        cache.lastsave()
     except Exception as e:
         logger.info(e.__str__())
         pool.close()
         pool.join()
-
 
 
 def parse_chunk(data):
