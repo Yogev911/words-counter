@@ -1,5 +1,5 @@
 requests==2.22.0
 Flask==1.1.1
-flask_cors==3.0.8
+flask_cors==3.0.9
 flask_restful_swagger_2==0.35
 redis==3.3.8
